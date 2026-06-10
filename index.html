@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XRP Empire - Mini App</title>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/npm/emoji-datasource-apple@6.0.1/img/apple/64/1f680.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/npm/emoji-datasource-apple@6.0.1/img/apple/64/1f680.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/npm/emoji-datasource-apple@6.0.1/img/apple/64/1f680.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#6c5ce7">
+    
+    <style>
+        /* CSS STYLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d0d1a;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+        
+        .container { max-width: 480px; margin: 0 auto; }
+        
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            padding: 30px 20px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header-icon { font-size: 48px; margin-bottom: 5px; }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .balance { font-size: 40px; font-weight: bold; margin: 10px 0; }
+        .balance span { font-size: 24px; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .btn:hover { background: #2a2a4e; transform: scale(1.02); }
+        .btn .icon { font-size: 28px; display: block; margin-bottom: 5px; }
+        
+        .card {
+            background: #1a1a2e;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .card h3 { margin-bottom: 10px; color: #a29bfe; }
+        
+        .claim-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            color: white;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #2a2a4e;
+        }
+        
+        .bottom-nav span {
+            cursor: pointer;
+            padding: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .bottom-nav span.active { color: #a29bfe; }
+        
+        .hidden { display: none; }
+        
+        /* Redirect Notice */
+        .redirect-notice {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .redirect-notice .icon { font-size: 64px; margin-bottom: 20px; }
+        .redirect-notice h2 { margin-bottom: 10px; }
+        .redirect-notice p { color: #a29bfe; margin-bottom: 20px; }
+        .redirect-notice .btn-telegram {
+            display: inline-block;
+            background: #0088cc;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<!-- REDIRECT NOTICE (Shown when accessed outside Telegram) -->
+<div id="redirectNotice" class="redirect-notice">
+    <div class="icon">🚫</div>
+    <h2>Access Denied</h2>
+    <p>This app can only be accessed through Telegram.</p>
+    <a href="https://t.me/YOUR_BOT_USERNAME" class="btn-telegram">📱 Open in Telegram</a>
+</div>
+
+<!-- MAIN APP (Hidden if not in Telegram) -->
+<div id="mainApp" class="container" style="display:none;">
+    
+    <!-- Header -->
+    <div class="header">
+        <div class="header-icon">🚀</div>
+        <h1>XRP Empire</h1>
+        <div class="balance">
+            <span>₦</span>
+            <span id="balanceDisplay">0.00</span>
+        </div>
+        <div style="font-size:14px; opacity:0.8;">Wallet Balance</div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid">
+        <button class="btn" onclick="showPage('wallet')">
+            <span class="icon">💰</span> Wallet
+        </button>
+        <button class="btn" onclick="showPage('refer')">
+            <span class="icon">👥</span> Refer
+        </button>
+        <button class="btn" onclick="showPage('tasks')">
+            <span class="icon">📋</span> Tasks
+        </button>
+        <button class="btn" onclick="showPage('bonus')">
+            <span class="icon">🎁</span> Bonus
+        </button>
+        <button class="btn" onclick="showPage('leaderboard')">
+            <span class="icon">🏆</span> Leaderboard
+        </button>
+        <button class="btn" onclick="showPage('vip')">
+            <span class="icon">💎</span> VIP
+        </button>
+    </div>
+
+    <!-- Content Pages -->
+    <div id="content">
+        <!-- Home / Bonus Page -->
+        <div id="page-home" class="card">
+            <h3>🎁 Daily Bonus</h3>
+            <p>Claim ₦50 every 24 hours</p>
+            <button class="claim-btn" onclick="claimBonus()">CLAIM ₦50</button>
+            <div id="bonusStatus" style="margin-top:10px; font-size:14px; color:#a29bfe;"></div>
+        </div>
+
+        <!-- Wallet Page -->
+        <div id="page-wallet" class="card hidden">
+            <h3>💼 Wallet</h3>
+            <p><strong>Balance:</strong> ₦<span id="walletBalance">0.00</span></p>
+            <p><strong>Total Earned:</strong> ₦<span id="totalEarned">0.00</span></p>
+            <p><strong>Today's Earnings:</strong> ₦<span id="todayEarnings">0.00</span></p>
+            <button class="claim-btn" onclick="showPage('home')">🔙 Back</button>
+        </div>
+
+        <!-- Refer Page -->
+        <div id="page-refer" class="card hidden">
+            <h3>👥 Refer & Earn</h3>
+            <p><strong>Your Referral Link:</strong></p>
+            <div style="background:#0d0d1a; padding:10px; border-radius:8px; font-size:12px; word-break:break-all; margin:10px 0;">
+                <span id="refLink">https://t.me/YOUR_BOT_USERNAME?start=ref_12345</span>
+            </div>
+            <p><strong>Reward per referral:</strong> ₦100</p>
+            <p><strong>Total Referrals:</strong> <span id="totalRefs">0</span></p>
+            <button class="claim-btn" onclick="copyRefLink()">📤 Copy Link</button>
+            <button class="claim-btn" style="background:#2a2a4e; margin-top:5px;" onclick="showPage('home')">🔙 Back</button>
+        </div>
+
+        <!-- Tasks Page -->
+        <div id="page-tasks" class="card hidden">
+            <h3>📋 Available Tasks</h3>
+            <div style="margin:10px 0;">
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #2a2a4e;">
+                    <span>Join Channel 1</span>
+                    <span>₦20</span>
+                    <button onclick="completeTask(1)" style="background:#6c5ce7; border:none; color:white; padding:4px 12px; border-radius:8px; cursor:pointer;">Do</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #2a2a4e;">
+                    <span>Join Channel 2</span>
+                    <span>₦20</span>
+                    <button onclick="completeTask(2)" style="background:#6c5ce7; border:none; color:white; padding:4px 12px; border-radius:8px; cursor:pointer;">Do</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #2a2a4e;">
+                    <span>Subscribe YouTube</span>
+                    <span>₦50</span>
+                    <button onclick="completeTask(3)" style="background:#6c5ce7; border:none; color:white; padding:4px 12px; border-radius:8px; cursor:pointer;">Do</button>
+                </div>
+            </div>
+            <button class="claim-btn" style="background:#2a2a4e;" onclick="showPage('home')">🔙 Back</button>
+        </div>
+
+        <!-- Leaderboard Page -->
+        <div id="page-leaderboard" class="card hidden">
+            <h3>🏆 Top Earners</h3>
+            <div style="margin:10px 0;">
+                <div style="display:flex; justify-content:space-between; padding:5px 0;">🥇 User1 <span>₦10,000</span></div>
+                <div style="display:flex; justify-content:space-between; padding:5px 0;">🥈 User2 <span>₦8,500</span></div>
+                <div style="display:flex; justify-content:space-between; padding:5px 0;">🥉 User3 <span>₦7,200</span></div>
+                <div style="display:flex; justify-content:space-between; padding:5px 0;">4️⃣ User4 <span>₦6,000</span></div>
+                <div style="display:flex; justify-content:space-between; padding:5px 0;">5️⃣ User5 <span>₦5,500</span></div>
+            </div>
+            <p style="color:#a29bfe;">Your Rank: #847</p>
+            <button class="claim-btn" style="background:#2a2a4e;" onclick="showPage('home')">🔙 Back</button>
+        </div>
+
+        <!-- VIP Page -->
+        <div id="page-vip" class="card hidden">
+            <h3>💎 VIP Club</h3>
+            <div style="margin:10px 0; padding:10px; background:#0d0d1a; border-radius:8px;">
+                <strong>⭐ Basic VIP</strong> - ₦2,500/month<br>
+                <small>2x earnings, 5% withdrawal fee</small>
+            </div>
+            <div style="margin:10px 0; padding:10px; background:#0d0d1a; border-radius:8px;">
+                <strong>⭐ Pro VIP</strong> - ₦5,000/month<br>
+                <small>5x earnings, 0% withdrawal fee</small>
+            </div>
+            <div style="margin:10px 0; padding:10px; background:#0d0d1a; border-radius:8px;">
+                <strong>⭐ Elite VIP</strong> - ₦10,000/month<br>
+                <small>10x earnings, instant withdraw</small>
+            </div>
+            <button class="claim-btn" style="background:#2a2a4e;" onclick="showPage('home')">🔙 Back</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <span onclick="showPage('home')" class="active">🏠 Home</span>
+        <span onclick="showPage('tasks')">📋 Tasks</span>
+        <span onclick="showPage('leaderboard')">🏆 Top</span>
+        <span onclick="showPage('wallet')">👤 Profile</span>
+    </div>
+</div>
+
+<script>
+    //=========================================
+    // REDIRECT PROTECTION
+    //=========================================
+    
+    // Check if running inside Telegram
+    const isTelegram = window.Telegram && window.Telegram.WebApp;
+    
+    if (!isTelegram) {
+        // Not in Telegram - show redirect notice
+        document.getElementById('redirectNotice').style.display = 'block';
+        document.getElementById('mainApp').style.display = 'none';
+    } else {
+        // In Telegram - show app
+        document.getElementById('redirectNotice').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Expand to full height
+        
+        // Get user data
+        const user = tg.initDataUnsafe.user;
+        const userId = user ? user.id : 'unknown';
+        const username = user ? user.username || user.first_name : 'User';
+        
+        console.log('User:', username, 'ID:', userId);
+        
+        // Load user data from server (you'll implement this)
+        loadUserData(userId);
+    }
+    
+    //=========================================
+    // APP FUNCTIONS
+    //=========================================
+    
+    function loadUserData(userId) {
+        // Here you would fetch data from your backend
+        // For demo, we use localStorage
+        const savedBalance = localStorage.getItem('balance_' + userId) || '0.00';
+        const savedRefs = localStorage.getItem('refs_' + userId) || '0';
+        
+        document.getElementById('balanceDisplay').textContent = savedBalance;
+        document.getElementById('walletBalance').textContent = savedBalance;
+        document.getElementById('totalRefs').textContent = savedRefs;
+    }
+    
+    function showPage(page) {
+        // Hide all pages
+        const pages = document.querySelectorAll('#content > div');
+        pages.forEach(p => p.classList.add('hidden'));
+        
+        // Show selected page
+        const target = document.getElementById('page-' + page);
+        if (target) target.classList.remove('hidden');
+        
+        // Update bottom nav
+        const navItems = document.querySelectorAll('.bottom-nav span');
+        navItems.forEach(item => item.classList.remove('active'));
+        
+        // Mark active nav item
+        if (page === 'home') navItems[0].classList.add('active');
+        if (page === 'tasks') navItems[1].classList.add('active');
+        if (page === 'leaderboard') navItems[2].classList.add('active');
+        if (page === 'wallet') navItems[3].classList.add('active');
+    }
+    
+    function claimBonus() {
+        const status = document.getElementById('bonusStatus');
+        const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+        
+        // Check if already claimed (24hr cooldown)
+        const lastClaim = localStorage.getItem('lastClaim_' + userId);
+        const now = Date.now();
+        
+        if (lastClaim && (now - parseInt(lastClaim)) < 86400000) {
+            status.textContent = '⏳ Already claimed! Come back tomorrow.';
+            status.style.color = '#ff6b6b';
+            return;
+        }
+        
+        // Claim bonus
+        const currentBalance = parseFloat(localStorage.getItem('balance_' + userId) || '0');
+        const newBalance = currentBalance + 50;
+        localStorage.setItem('balance_' + userId, newBalance.toString());
+        localStorage.setItem('lastClaim_' + userId, now.toString());
+        
+        // Update display
+        document.getElementById('balanceDisplay').textContent = newBalance.toFixed(2);
+        document.getElementById('walletBalance').textContent = newBalance.toFixed(2);
+        
+        status.textContent = '✅ Claimed ₦50!';
+        status.style.color = '#51cf66';
+    }
+    
+    function completeTask(taskId) {
+        const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+        const reward = taskId === 3 ? 50 : 20;
+        
+        const currentBalance = parseFloat(localStorage.getItem('balance_' + userId) || '0');
+        const newBalance = currentBalance + reward;
+        localStorage.setItem('balance_' + userId, newBalance.toString());
+        
+        // Update display
+        document.getElementById('balanceDisplay').textContent = newBalance.toFixed(2);
+        document.getElementById('walletBalance').textContent = newBalance.toFixed(2);
+        
+        alert('✅ Task completed! +₦' + reward);
+    }
+    
+    function copyRefLink() {
+        const link = document.getElementById('refLink').textContent;
+        navigator.clipboard.writeText(link).then(() => {
+            alert('✅ Referral link copied!');
+        });
+    }
+</script>
+
+</body>
+</html>
